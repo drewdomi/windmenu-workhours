@@ -1,0 +1,7 @@
+{
+  "name": "windmenu-workhours",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
