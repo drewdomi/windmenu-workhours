@@ -1,0 +1,25 @@
+{
+  "overrides": [
+    {
+      "files": "*.html",
+      "options": {
+        "parser": "angular"
+      }
+    },
+    {
+      "files": ["*.yaml", "*.yml"],
+      "options": {
+        "tabWidth": 2,
+        "printWidth": 40,
+        "singleQuote": true
+      }
+    }
+  ],
+  "trailingComma": "none",
+  "semi": false,
+  "arrowParens": "avoid",
+  "htmlWhitespaceSensitivity": "ignore",
+  "endOfLine": "lf",
+  "tabWidth": 2,
+  "bracketSpacing": true
+}

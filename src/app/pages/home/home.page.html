@@ -1,0 +1,103 @@
+<!-- home.page.html -->
+<ion-header>
+  <ion-toolbar>
+    <div class="bg">
+      <ion-title>Business Hours</ion-title>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content color="light">
+  <div class="bg">
+    <form [formGroup]="businessHoursForm">
+      <ion-list [inset]="true">
+        <ion-item-divider>
+          <ion-label>Days of Week</ion-label>
+        </ion-item-divider>
+        <ion-item-group>
+          @for (day of daysOfWeek; track day) {
+            <ion-item [formGroupName]="day">
+              <ion-toggle formControlName="isOpen">
+                {{ day | titlecase }}
+              </ion-toggle>
+            </ion-item>
+          }
+        </ion-item-group>
+      </ion-list>
+
+      <!-- Hours setup for selections -->
+      @for (selection of workHoursSelections; track selection.days[0]) {
+        <ion-list [inset]="true">
+          <ion-item-group>
+            <ion-item-divider>
+              <ion-label>{{ getRangeText(selection) }} Hours</ion-label>
+            </ion-item-divider>
+
+            <ion-item [formGroupName]="selection.days[0]">
+              <ion-grid formGroupName="hours" class="ion-no-padding">
+                <ion-row>
+                  <ion-col>
+                    <ion-input
+                      type="time"
+                      formControlName="open"
+                      label="Opening at:"
+                      labelPlacement="stacked"
+                    ></ion-input>
+                  </ion-col>
+                  <ion-col>
+                    <ion-input
+                      type="time"
+                      formControlName="close"
+                      label="Closing at"
+                      labelPlacement="stacked"
+                    ></ion-input>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-item>
+
+            <ion-item>
+              <ion-label>Add Break</ion-label>
+              <ion-toggle [checked]="hasBreak(selection.days[0])" slot="end" />
+            </ion-item>
+
+            @if (hasBreak(selection.days[0])) {
+              <ion-item [formGroupName]="selection.days[0]">
+                <ion-grid formGroupName="break" class="ion-no-padding">
+                  <ion-row>
+                    <ion-col>
+                      <ion-input
+                        type="time"
+                        formControlName="start"
+                        label="Break Start"
+                        labelPlacement="stacked"
+                      ></ion-input>
+                    </ion-col>
+                    <ion-col>
+                      <ion-input
+                        type="time"
+                        formControlName="end"
+                        label="Break End"
+                        labelPlacement="stacked"
+                      ></ion-input>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-item>
+            }
+          </ion-item-group>
+        </ion-list>
+      }
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <div class="bg">
+      <ion-button (click)="onSubmit()" expand="block" class="ion-margin">
+        Save Business Hours
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>
