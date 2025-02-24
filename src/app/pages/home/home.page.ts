@@ -87,6 +87,7 @@ export class HomePage implements OnInit {
           open: [''],
           close: ['']
         }),
+        hasBreak: [false],
         break: this.formBuilder.group({
           start: [''],
           end: [''],
@@ -99,7 +100,7 @@ export class HomePage implements OnInit {
 
   private watchForm() {
     this.businessHoursForm.valueChanges
-      .pipe(debounceTime(500))
+      .pipe(debounceTime(800))
       .subscribe(value => {
         const selectedDays = Object.entries(value)
           .filter(([_, dayValue]: [string, any]) => dayValue.isOpen)
@@ -223,7 +224,24 @@ export class HomePage implements OnInit {
   }
 
   hasBreak(day: string): boolean {
-    const breakValue = this.businessHoursForm.get(day)?.get('break')?.value
-    return !!breakValue?.start
+    return this.businessHoursForm.get(day)?.get('hasBreak')?.value ?? false
+  }
+
+  toggleBreak(selection: WorkHoursSelection, checked: boolean) {
+    const days = selection.days
+    days.forEach(day => {
+      const dayControl = this.businessHoursForm.get(day)
+      if (dayControl) {
+        dayControl.patchValue(
+          {
+            hasBreak: checked,
+            break: checked
+              ? dayControl.get('break')?.value
+              : { start: '', end: '', type: '' }
+          },
+          { emitEvent: false }
+        )
+      }
+    })
   }
 }

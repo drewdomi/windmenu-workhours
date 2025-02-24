@@ -35,14 +35,14 @@
 
             <ion-item [formGroupName]="selection.days[0]">
               <ion-grid formGroupName="hours" class="ion-no-padding">
-                <ion-row>
+                <ion-row class="ion-justify-items-between">
                   <ion-col>
                     <ion-input
                       type="time"
                       formControlName="open"
                       label="Opening at:"
                       labelPlacement="stacked"
-                    ></ion-input>
+                    />
                   </ion-col>
                   <ion-col>
                     <ion-input
@@ -50,15 +50,19 @@
                       formControlName="close"
                       label="Closing at"
                       labelPlacement="stacked"
-                    ></ion-input>
+                    />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             </ion-item>
 
-            <ion-item>
-              <ion-label>Add Break</ion-label>
-              <ion-toggle [checked]="hasBreak(selection.days[0])" slot="end" />
+            <ion-item [formGroupName]="selection.days[0]">
+              <ion-toggle
+                formControlName="hasBreak"
+                (ionChange)="toggleBreak(selection, $event.detail.checked)"
+              >
+                Add Break
+              </ion-toggle>
             </ion-item>
 
             @if (hasBreak(selection.days[0])) {
@@ -71,7 +75,7 @@
                         formControlName="start"
                         label="Break Start"
                         labelPlacement="stacked"
-                      ></ion-input>
+                      />
                     </ion-col>
                     <ion-col>
                       <ion-input
@@ -79,7 +83,7 @@
                         formControlName="end"
                         label="Break End"
                         labelPlacement="stacked"
-                      ></ion-input>
+                      />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
