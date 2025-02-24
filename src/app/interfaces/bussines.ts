@@ -8,12 +8,15 @@ export interface DaySchedule {
   break?: {
     start: string
     end: string
-    type?: string
   }
-  breaks?: null
 }
 
 export interface Hours {
-  open: string
-  close: string
+  open: string | null
+  close: string | null
+}
+
+export interface WorkHoursSelection {
+  days: string[]
+  isRange: boolean
 }

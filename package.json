@@ -8,6 +8,7 @@
     "ng": "ng",
     "ionic": "ionic",
     "start": "ionic serve",
+    "start:no-hmr": "ionic serve --no-hmr",
     "build": "ionic build",
     "watch": "ionic build --watch --configuration development",
     "test": "ng test",

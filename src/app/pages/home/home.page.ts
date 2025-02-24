@@ -24,21 +24,8 @@ import {
   IonToolbar
 } from '@ionic/angular/standalone'
 import { debounceTime } from 'rxjs'
-
-const DAYS_OF_WEEK = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday'
-]
-
-interface WorkHoursSelection {
-  days: string[]
-  isRange: boolean
-}
+import { DAYS_OF_WEEK } from 'src/app/constants/week'
+import { WorkHoursSelection } from 'src/app/interfaces/bussines'
 
 @Component({
   standalone: true,
@@ -89,13 +76,55 @@ export class HomePage implements OnInit {
         }),
         hasBreak: [false],
         break: this.formBuilder.group({
-          start: [''],
-          end: [''],
-          type: ['']
+          start: [null as string | null],
+          end: [null as string | null]
         })
       })
     })
     this.businessHoursForm = this.formBuilder.group(group)
+  }
+
+  private findRanges(days: string[]): WorkHoursSelection[] {
+    // Sort days according to DAYS_OF_WEEK order
+    const sortedDays = [...days].sort(
+      (a, b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b)
+    )
+
+    const ranges: WorkHoursSelection[] = []
+    let currentRange: string[] = []
+
+    sortedDays.forEach((day, index) => {
+      if (currentRange.length === 0) {
+        currentRange.push(day)
+      } else {
+        // Check if this day creates a gap in the range
+        const prevDayIndex = DAYS_OF_WEEK.indexOf(
+          currentRange[currentRange.length - 1]
+        )
+        const currentDayIndex = DAYS_OF_WEEK.indexOf(day)
+
+        // If there's a gap between days, start a new range
+        if (currentDayIndex - prevDayIndex > 1) {
+          ranges.push({
+            days: [...currentRange],
+            isRange: currentRange.length > 1
+          })
+          currentRange = [day]
+        } else {
+          currentRange.push(day)
+        }
+      }
+    })
+
+    // Add the last range
+    if (currentRange.length > 0) {
+      ranges.push({
+        days: currentRange,
+        isRange: currentRange.length > 1
+      })
+    }
+
+    return ranges
   }
 
   private watchForm() {
@@ -136,41 +165,61 @@ export class HomePage implements OnInit {
 
         // Handle new selections
         if (newlySelectedDays.length > 0) {
-          // Check if we're making consecutive selections (potential range)
-          const isConsecutiveSelection =
-            newlySelectedDays.length > 1 &&
-            newlySelectedDays.every((day, index) => {
-              if (index === 0) return true
-              const currentIndex = DAYS_OF_WEEK.indexOf(day)
-              const prevIndex = DAYS_OF_WEEK.indexOf(
-                newlySelectedDays[index - 1]
-              )
-              return currentIndex === prevIndex + 1
-            })
+          // Find groups of consecutive days in newly selected days
+          const groups: string[][] = []
+          let currentGroup: string[] = []
 
-          if (isConsecutiveSelection) {
-            // Range selection
-            this.workHoursSelections.push({
-              days: newlySelectedDays,
-              isRange: true
-            })
-            this.applyHoursToRange(newlySelectedDays)
-          } else {
-            // Individual selections
-            newlySelectedDays.forEach(day => {
-              // Check if the day isn't already part of any selection
-              const isPartOfExistingSelection = this.workHoursSelections.some(
-                selection => selection.days.includes(day)
-              )
+          // Sort newly selected days by their order in the week
+          const sortedDays = [...newlySelectedDays].sort(
+            (a, b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b)
+          )
 
-              if (!isPartOfExistingSelection) {
-                this.workHoursSelections.push({
-                  days: [day],
-                  isRange: false
-                })
+          sortedDays.forEach(day => {
+            if (currentGroup.length === 0) {
+              currentGroup.push(day)
+            } else {
+              const lastDayIndex = DAYS_OF_WEEK.indexOf(
+                currentGroup[currentGroup.length - 1]
+              )
+              const currentDayIndex = DAYS_OF_WEEK.indexOf(day)
+
+              if (currentDayIndex === lastDayIndex + 1) {
+                // Consecutive day, add to current group
+                currentGroup.push(day)
+              } else {
+                // Not consecutive, start a new group
+                if (currentGroup.length > 0) {
+                  groups.push([...currentGroup])
+                }
+                currentGroup = [day]
               }
-            })
+            }
+          })
+
+          // Add the last group
+          if (currentGroup.length > 0) {
+            groups.push(currentGroup)
           }
+
+          // Create selections for each group
+          groups.forEach(group => {
+            // Check if any day in the group is already part of an existing selection
+            const isPartOfExisting = group.some(day =>
+              this.workHoursSelections.some(selection =>
+                selection.days.includes(day)
+              )
+            )
+
+            if (!isPartOfExisting) {
+              this.workHoursSelections.push({
+                days: group,
+                isRange: group.length > 1
+              })
+
+              // Apply hours to new range
+              this.applyHoursToRange(group)
+            }
+          })
         }
 
         // Update last selected days
@@ -192,6 +241,9 @@ export class HomePage implements OnInit {
     const firstDayBreak = this.businessHoursForm
       .get(firstDay)
       ?.get('break')?.value
+    const hasBreakValue = this.businessHoursForm
+      .get(firstDay)
+      ?.get('hasBreak')?.value
 
     days.forEach(day => {
       const dayControl = this.businessHoursForm.get(day)
@@ -200,7 +252,8 @@ export class HomePage implements OnInit {
           {
             isOpen: true,
             hours: firstDayHours,
-            break: firstDayBreak
+            break: firstDayBreak,
+            hasBreak: hasBreakValue
           },
           { emitEvent: false }
         )
@@ -209,11 +262,13 @@ export class HomePage implements OnInit {
   }
 
   getRangeText(selection: WorkHoursSelection): string {
-    if (!selection.isRange) {
+    // If it's not a range or has only one day, just show the day name
+    if (!selection.isRange || selection.days.length === 1) {
       return (
         selection.days[0].charAt(0).toUpperCase() + selection.days[0].slice(1)
       )
     }
+
     const first = selection.days[0]
     const last = selection.days[selection.days.length - 1]
     return `${first.charAt(0).toUpperCase() + first.slice(1)} to ${last.charAt(0).toUpperCase() + last.slice(1)}`
